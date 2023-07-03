@@ -22,5 +22,36 @@ namespace SentimentChatbotWebAPI.Controllers
             _azureSecretClientWrapper = azureSecretClientWrapper;
             _configuration = configuration;
         }
+
+        [HttpPost("/AuthenticateUser")]
+        public IActionResult AuthenticateUser()
+        {
+            string username = Request.Headers["username"].FirstOrDefault();
+            string password = Request.Headers["password"].FirstOrDefault();
+
+            User user = new User
+            {
+                Username = username,
+                Password = password,
+                Role = "User"
+            };
+            try
+            {
+                if (username == _azureSecretClientWrapper.GetSecret("SentimentLoginName") && password == _azureSecretClientWrapper.GetSecret("SentimentUserPassword"))
+                {
+                    //TODO: create JWT token upon succesfull authentication
+                    //var token = _repository.GenerateJwtToken(user);
+                    return Ok();
+                }
+                else
+                {
+                    return StatusCode(401, "Incorrect credentials");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
+            }
+        }
     }
 }
