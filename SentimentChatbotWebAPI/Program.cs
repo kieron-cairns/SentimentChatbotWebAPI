@@ -37,6 +37,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<IAzureKeyVaultWrapper>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    string keyVaultUrl = config["keyVaultConfig:KVUrl"];
+    string tenantId = config["keyVaultConfig:TenantId"];
+    string clientId = config["keyVaultConfig:ClientId"];
+    string clientSecretId = config["keyVaultConfig:ClientSecretId"];
+
+    var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecretId);
+    var secretClient = new SecretClient(new Uri(keyVaultUrl), clientSecretCredential);
+    return new AzureKeyVaultWrapper(secretClient);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

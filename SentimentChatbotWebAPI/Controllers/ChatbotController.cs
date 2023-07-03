@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SentimentChatbotWebAPI.Interfaces;
+using SentimentChatbotWebAPI.Models;
 
 namespace SentimentChatbotWebAPI.Controllers
 {
