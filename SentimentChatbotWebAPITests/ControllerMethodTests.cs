@@ -16,13 +16,46 @@ namespace SentimentChatbotWebAPITests
         private readonly Mock<IAzureSecretClientWrapper> _azureSecretClientWrapper;
         private Mock<IConfiguration> _configurationMock;
 
-
-
         public ControllerMethodTests()
         {
             _azureSecretClientWrapper = new Mock<IAzureSecretClientWrapper>();
-
         }
+
+        [Fact]
+        public async Task AuthenticateUser_Retuns_Unauthorized()
+        {
+            var httpClientMock = new Mock<IHttpClientFactory>();
+            var httpClient = new HttpClient(new MockHttpMessageHandler((request, cancellationToken) =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+                return Task.FromResult(response);
+            }));
+
+            var httpContextMock = new Mock<HttpContext>();
+
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            httpContextAccessorMock.SetupGet(a => a.HttpContext).Returns(httpContextMock.Object);
+
+            var chatbotRepositoryMock = new Mock<IChatbotRepository>();
+
+            var configurationMock = new Mock<IConfiguration>();
+
+            var controller = new ChatbotController(httpClientMock.Object, httpContextAccessorMock.Object, chatbotRepositoryMock.Object, _azureSecretClientWrapper.Object, configurationMock.Object);
+
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.HttpContext.Request.Headers["username"] = "invalidusername";
+            controller.HttpContext.Request.Headers["password"] = "invalidpassword";
+
+            //Act
+
+            var result = controller.AuthenticateUser();
+
+            //Assert
+            var objectResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(401, objectResult.StatusCode);
+        }
+
 
         [Fact]
         public async Task AuthenticateUser_Returns_OK()
@@ -69,6 +102,5 @@ namespace SentimentChatbotWebAPITests
             var objectResult = Assert.IsType<OkResult>(result);
             Assert.Equal(200, objectResult.StatusCode);
         }
-
     }
 }
