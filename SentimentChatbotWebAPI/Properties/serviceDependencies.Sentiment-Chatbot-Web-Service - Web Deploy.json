@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "apis1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/Sentiment-Chatbot-Web-API-Service-Group/apis/Sentiment-Chatbot-Web-API",
+      "type": "apis.azure"
+    }
+  }
+}
