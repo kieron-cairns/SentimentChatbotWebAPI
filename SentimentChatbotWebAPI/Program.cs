@@ -17,7 +17,7 @@ var azureCredential = new ClientSecretCredential(keyVaultTenantId, keyVaultClien
 
 var client = new SecretClient(keyVaultUrl, azureCredential);
 
-var connectionString = client.GetSecret(builder.Configuration.GetSection("ConnectionStrings:Test-DB").Value).Value.Value;
+var connectionString = client.GetSecret(builder.Configuration.GetSection("ConnectionStrings:Prod-DB").Value).Value.Value;
 
 // Add the DbContext with the SQL connection string to the service container
 builder.Services.AddDbContext<SentimentQueryHistoryContext>(options =>
