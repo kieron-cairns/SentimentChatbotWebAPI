@@ -1,5 +1,12 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
+using SentimentChatbotWebAPI.Controllers;
 using SentimentChatbotWebAPI.Interfaces;
+using SentimentChatbotWebAPI.Models;
+using SentimentChatbotWebAPITests.MockObjects;
+using System.Net;
 
 namespace SentimentChatbotWebAPITests
 {
@@ -7,16 +14,61 @@ namespace SentimentChatbotWebAPITests
     {
 
         private readonly Mock<IAzureSecretClientWrapper> _azureSecretClientWrapper;
+        private Mock<IConfiguration> _configurationMock;
+
+
 
         public ControllerMethodTests()
         {
             _azureSecretClientWrapper = new Mock<IAzureSecretClientWrapper>();
+
         }
 
         [Fact]
-        public void Test1()
+        public async Task AuthenticateUser_Returns_OK()
         {
+            // Arrange
+            var httpClientMock = new Mock<IHttpClientFactory>();
+            var httpClient = new HttpClient(new MockHttpMessageHandler((request, cancellationToken) =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                return Task.FromResult(response);
+            }));
 
+            var httpContextMock = new Mock<HttpContext>();
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            httpContextAccessorMock.SetupGet(a => a.HttpContext).Returns(httpContextMock.Object);
+
+            var configurationMock = new Mock<IConfiguration>();
+            configurationMock.Setup(x => x["TestUsers:Username"]).Returns("validusername");
+            configurationMock.Setup(x => x["TestUsers:Password"]).Returns("validpassword");
+
+            var secretClientWrapperMock = new Mock<IAzureSecretClientWrapper>();
+            secretClientWrapperMock.Setup(r => r.GetSecret("validusername")).Returns("validusername");
+            secretClientWrapperMock.Setup(r => r.GetSecret("validpassword")).Returns("validpassword");
+
+            var chatbotRepositoryMock = new Mock<IChatbotRepository>();
+            // sentimentRepositoryMock.Setup(r => r.GenerateJwtToken(It.IsAny<User>())).Returns("testToken");
+
+            var controller = new ChatbotController(
+                httpClientMock.Object,
+                httpContextAccessorMock.Object,
+                chatbotRepositoryMock.Object,
+                secretClientWrapperMock.Object,
+                configurationMock.Object
+            );
+
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.HttpContext.Request.Headers["username"] = "validusername";
+            controller.HttpContext.Request.Headers["password"] = "validpassword";
+
+            // Act
+            var result = controller.AuthenticateUser();
+
+            // Assert
+            var objectResult = Assert.IsType<OkResult>(result);
+            Assert.Equal(200, objectResult.StatusCode);
         }
+
     }
 }
