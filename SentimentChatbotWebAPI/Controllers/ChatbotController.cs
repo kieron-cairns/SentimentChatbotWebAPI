@@ -22,6 +22,5 @@ namespace SentimentChatbotWebAPI.Controllers
             _azureSecretClientWrapper = azureSecretClientWrapper;
             _configuration = configuration;
         }
-
     }
 }

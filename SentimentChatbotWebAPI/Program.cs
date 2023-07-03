@@ -2,6 +2,8 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.EntityFrameworkCore;
 using SentimentChatbotWebAPI.Data;
+using SentimentChatbotWebAPI.Interfaces;
+using SentimentChatbotWebAPI.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,13 @@ var connectionString = client.GetSecret(builder.Configuration.GetSection("Connec
 // Add the DbContext with the SQL connection string to the service container
 builder.Services.AddDbContext<SentimentQueryHistoryContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+builder.Services.AddSingleton<IAzureSecretClientWrapper, AzureSecretClientWrapper>();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
