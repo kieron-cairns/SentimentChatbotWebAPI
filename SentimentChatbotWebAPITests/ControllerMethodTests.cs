@@ -81,7 +81,7 @@ namespace SentimentChatbotWebAPITests
             secretClientWrapperMock.Setup(r => r.GetSecret("validpassword")).Returns("validpassword");
 
             var chatbotRepositoryMock = new Mock<IChatbotRepository>();
-            // sentimentRepositoryMock.Setup(r => r.GenerateJwtToken(It.IsAny<User>())).Returns("testToken");
+            chatbotRepositoryMock.Setup(r => r.GenerateJwtToken(It.IsAny<User>())).Returns("testToken");
 
             var controller = new ChatbotController(
                 httpClientMock.Object,

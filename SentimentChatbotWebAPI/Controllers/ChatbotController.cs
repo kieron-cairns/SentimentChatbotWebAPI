@@ -41,7 +41,7 @@ namespace SentimentChatbotWebAPI.Controllers
                 if (username == _azureSecretClientWrapper.GetSecret(_configuration["TestUsers:Username"]) && password == _azureSecretClientWrapper.GetSecret(_configuration["TestUsers:Password"]))
                 {
                     //TODO: create JWT token upon succesfull authentication
-                    //var token = _repository.GenerateJwtToken(user);
+                    var token = _repository.GenerateJwtToken(user);
                     return Ok();
                 }
                 else
