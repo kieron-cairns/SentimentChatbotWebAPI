@@ -36,7 +36,7 @@ namespace SentimentChatbotWebAPITests
         [Fact]
         public void Generate_JWT_Token_Succesfully_Creates_Token()
         {
-            var mockContext = new Mock<ISentimentHistoryContext>();
+            var mockContext = new Mock<ISentimentQueryHistoryContext>();
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSecretKey"));
             _jwtTokenHandlerMock.Setup(th => th.WriteToken(It.IsAny<SecurityToken>())).Returns("fakeTokenString");

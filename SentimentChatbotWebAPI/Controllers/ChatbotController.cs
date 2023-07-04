@@ -27,18 +27,22 @@ namespace SentimentChatbotWebAPI.Controllers
         [HttpPost("/AuthenticateUser")]
         public IActionResult AuthenticateUser()
         {
-            string username = Request.Headers["username"].FirstOrDefault();
-            string password = Request.Headers["password"].FirstOrDefault();
+            string httpHeaderUsername = Request.Headers["username"].FirstOrDefault();
+            string httpHeaderPassword = Request.Headers["password"].FirstOrDefault();
 
             User user = new User
             {
-                Username = username,
-                Password = password,
+                Username = httpHeaderUsername,
+                Password = httpHeaderPassword,
                 Role = "User"
             };
             try
             {
-                if (username == _azureSecretClientWrapper.GetSecret(_configuration["TestUsers:Username"]) && password == _azureSecretClientWrapper.GetSecret(_configuration["TestUsers:Password"]))
+                string username = _configuration["TestUsers:Username"];
+                string password = _configuration["TestUsers:Password"];
+
+
+                if (httpHeaderUsername == _azureSecretClientWrapper.GetSecret(username) && httpHeaderPassword == _azureSecretClientWrapper.GetSecret(password))
                 {
                     //TODO: create JWT token upon succesfull authentication
                     var token = _repository.GenerateJwtToken(user);
@@ -51,7 +55,7 @@ namespace SentimentChatbotWebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.Message);
             }
         }
     }
