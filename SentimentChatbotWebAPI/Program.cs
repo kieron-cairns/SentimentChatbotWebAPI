@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using SentimentChatbotWebAPI.Data;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Utilities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using SentimentChatbotWebAPI.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +33,14 @@ builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-builder.Services.AddSingleton<IAzureSecretClientWrapper, AzureSecretClientWrapper>();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
+builder.Services.AddSingleton<IAzureSecretClientWrapper, AzureSecretClientWrapper>();
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ISentimentQueryHistoryContext, SentimentQueryHistoryContext>();
+builder.Services.AddScoped<IChatbotRepository, ChatbotRepository>();
+builder.Services.AddScoped<IJwtTokenHandler, JwtTokenHandlerWrapper>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -48,6 +58,21 @@ builder.Services.AddSingleton<IAzureKeyVaultWrapper>(sp =>
     var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecretId);
     var secretClient = new SecretClient(new Uri(keyVaultUrl), clientSecretCredential);
     return new AzureKeyVaultWrapper(secretClient);
+});
+
+var jwtSecretToken = client.GetSecret(builder.Configuration.GetSection("JWTConfig:TokenName").Value).Value.Value;
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretToken))
+    };
 });
 
 var app = builder.Build();
