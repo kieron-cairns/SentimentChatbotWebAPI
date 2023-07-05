@@ -99,7 +99,7 @@ namespace SentimentChatbotWebAPITests
             var result = controller.AuthenticateUser();
 
             // Assert
-            var objectResult = Assert.IsType<OkResult>(result);
+            var objectResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(200, objectResult.StatusCode);
         }
     }

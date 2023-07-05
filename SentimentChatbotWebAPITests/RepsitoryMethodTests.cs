@@ -57,7 +57,30 @@ namespace SentimentChatbotWebAPITests
 
             // Now you can make further assertions based on what your method is supposed to do.
         }
+
+        [Fact]
+        public void Generate_JWT_Token_Unsuccessfully_When_Invalid_Secret()
+        {
+            var mockContext = new Mock<ISentimentQueryHistoryContext>();
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSecretKey"));
+            _jwtTokenHandlerMock.Setup(th => th.WriteToken(It.IsAny<SecurityToken>())).Returns("fakeTokenString");
+
+            // Setup ValidateToken to throw an exception
+            _jwtTokenHandlerMock.Setup(th => th.ValidateToken(It.IsAny<string>(), It.IsAny<TokenValidationParameters>(), out _fakeToken))
+                .Throws(new SecurityTokenInvalidSignatureException());
+
+            _azureSecretClientWrapperMock.Setup(sPM => sPM.GetSecret("JWT-Secret-Token")).Returns("YourSecretKey");
+
+            var repository = new ChatbotRepository(mockContext.Object, _configurationMock.Object, _jwtTokenHandlerMock.Object, _azureSecretClientWrapperMock.Object);
+
+            var tokenString = repository.GenerateJwtToken(_user);
+
+            // Assert that tokenString is null or whatever you decided to return in the case of an exception
+            Assert.Null(tokenString);
+        }
+
     }
 
-    
+
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.IdentityModel.Tokens;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,38 +26,45 @@ namespace SentimentChatbotWebAPI.Repository
 
         public string GenerateJwtToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_azureSecretClientWrapper.GetSecret("JWT-Secret-Token")));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
+            try
             {
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_azureSecretClientWrapper.GetSecret("JWT-Secret-Token")));
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+                var claims = new[]
+                {
                 new Claim(ClaimTypes.NameIdentifier,user.Username),
                 new Claim(ClaimTypes.Role,user.Role)
             };
-            var token = new JwtSecurityToken(_configuration["Jwt:Issuer"],
-                _configuration["Jwt:Audience"],
-            claims,
-                expires: DateTime.UtcNow.AddSeconds(30),
-                signingCredentials: credentials);
+                var token = new JwtSecurityToken(_configuration["Jwt:Issuer"],
+                    _configuration["Jwt:Audience"],
+                claims,
+                    expires: DateTime.UtcNow.AddSeconds(30),
+                    signingCredentials: credentials);
 
-            var tokenString = _jwtTokenHandler.WriteToken(token);
+                var tokenString = _jwtTokenHandler.WriteToken(token);
 
 
-            // Configure token validation parameters
-            var validationParameters = new TokenValidationParameters
+                // Configure token validation parameters
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = securityKey,
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["Jwt:Audience"],
+                    ValidateLifetime = true // Enable validation of the token's lifetime
+                };
+
+                // Validate the token
+                var principal = _jwtTokenHandler.ValidateToken(tokenString, validationParameters, out var validatedToken);
+
+                return tokenString;
+            }
+            catch
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = securityKey,
-                ValidateIssuer = true,
-                ValidIssuer = _configuration["Jwt:Issuer"],
-                ValidateAudience = true,
-                ValidAudience = _configuration["Jwt:Audience"],
-                ValidateLifetime = true // Enable validation of the token's lifetime
-            };
-
-            // Validate the token
-            var principal = _jwtTokenHandler.ValidateToken(tokenString, validationParameters, out var validatedToken);
-
-            return tokenString;
+                return null;
+            }
         }
 
     }
