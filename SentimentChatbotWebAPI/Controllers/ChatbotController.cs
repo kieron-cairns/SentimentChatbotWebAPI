@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Models;
@@ -46,7 +47,7 @@ namespace SentimentChatbotWebAPI.Controllers
                 {
                     //TODO: create JWT token upon succesfull authentication
                     var token = _repository.GenerateJwtToken(user);
-                    return Ok();
+                    return Ok(token);
                 }
                 else
                 {
@@ -57,6 +58,13 @@ namespace SentimentChatbotWebAPI.Controllers
             {
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        [HttpGet("/VerifyBearer")]
+        [Authorize]
+        public IActionResult VerifyBearer()
+        {
+            return Ok();
         }
     }
 }
