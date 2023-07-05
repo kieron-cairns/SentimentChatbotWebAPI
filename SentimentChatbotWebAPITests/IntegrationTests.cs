@@ -8,6 +8,12 @@ using System.Net.Http.Headers;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using SentimentChatbotWebAPI.Interfaces;
+using Moq;
+using SentimentChatbotWebAPI.Models;
+using Microsoft.Extensions.Configuration;
+using SentimentChatbotWebAPI.Repository;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SentimentChatbotWebAPITests
 {
@@ -15,10 +21,15 @@ namespace SentimentChatbotWebAPITests
     public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>> // replace 'YourNamespace' with the actual namespace of your Program class
     {
         private readonly WebApplicationFactory<Program> _factory; // replace 'YourNamespace' with the actual namespace of your Program class
+        private readonly Mock<IAzureSecretClientWrapper> _azureSecretClientWrapperMock;
+        private readonly User _user;
 
         public IntegrationTests(WebApplicationFactory<Program> factory) // replace 'YourNamespace' with the actual namespace of your Program class
         {
             _factory = factory;
+            _azureSecretClientWrapperMock = new Mock<IAzureSecretClientWrapper>();
+            _configurationMock = new Mock<IConfiguration>();
+            _user = new User { Username = "testUsername", Password = "TestPassword", Role = "testRole" };
         }
 
         [Fact]
@@ -27,9 +38,19 @@ namespace SentimentChatbotWebAPITests
             // Arrange
             var client = _factory.CreateClient();
 
+            var mockContext = new Mock<ISentimentQueryHistoryContext>();
+            _azureSecretClientWrapperMock.Setup(sPM => sPM.GetSecret("JWT-Secret-Token")).Returns("YourSecretKey");
+
+            // Create a scope to retrieve scoped services
+            using var scope = _factory.Services.CreateScope();
+
+            // Get an instance of your IChatbotRepository
+            var chatbotRepository = scope.ServiceProvider.GetRequiredService<IChatbotRepository>();
+
             // Simulate Authentication by setting up Bearer token
-            // This should be replaced by a function that generates a valid token
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "Your valid JWT token here");
+            var tokenString = chatbotRepository.GenerateJwtToken(_user);
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenString);
 
             // Act
             var response = await client.GetAsync("/VerifyBearer");
@@ -38,6 +59,4 @@ namespace SentimentChatbotWebAPITests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }
-
-
 }

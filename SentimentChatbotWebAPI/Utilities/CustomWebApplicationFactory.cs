@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Moq;
+using SentimentChatbotWebAPI.Interfaces;
+using SentimentChatbotWebAPI.Repository;
 
 namespace SentimentChatbotWebAPI.Utilities
 {
@@ -10,10 +13,15 @@ namespace SentimentChatbotWebAPI.Utilities
 
             var builder = WebApplication.CreateBuilder(args);
 
-            // Mimic what's in your Program.cs, set up your configuration, services, and middleware
-            // This is an example, replace with your actual setup
+            // Mimic Program.cs depdencies, configuration, services, and middleware
             builder.Services.AddControllers();
-            // Add other necessary services for your application
+            builder.Services.AddAuthorization();
+
+            var mockAzureKeyVaultService = new Mock<IAzureKeyVaultWrapper>();
+            mockAzureKeyVaultService.Setup(s => s.GetSecret(It.IsAny<string>())).Returns("MockSecretValue");
+            builder.Services.AddSingleton(mockAzureKeyVaultService.Object);
+
+            builder.Services.AddSingleton<IChatbotRepository, ChatbotRepository>();
 
             // Then return the builder object
             return builder.Host;
