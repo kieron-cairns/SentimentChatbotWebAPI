@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SentimentChatbotWebAPITests
 {
-    internal class IntegrationTests
+    public class IntegrationTests
     {
     }
 }
