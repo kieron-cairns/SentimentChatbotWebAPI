@@ -34,12 +34,10 @@ builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
     .AddEnvironmentVariables();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
-builder.Services.AddSingleton<IAzureSecretClientWrapper, AzureSecretClientWrapper>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ISentimentQueryHistoryContext, SentimentQueryHistoryContext>();
 builder.Services.AddScoped<IChatbotRepository, ChatbotRepository>();
+builder.Services.AddScoped<ISentimentQueryHistoryContext, SentimentQueryHistoryContext>();
 builder.Services.AddScoped<IJwtTokenHandler, JwtTokenHandlerWrapper>();
 
 builder.Services.AddControllers();
@@ -59,6 +57,8 @@ builder.Services.AddSingleton<IAzureKeyVaultWrapper>(sp =>
     var secretClient = new SecretClient(new Uri(keyVaultUrl), clientSecretCredential);
     return new AzureKeyVaultWrapper(secretClient);
 });
+
+builder.Services.AddSingleton<IAzureSecretClientWrapper, AzureSecretClientWrapper>();
 
 var jwtSecretToken = client.GetSecret(builder.Configuration.GetSection("JWTConfig:TokenName").Value).Value.Value;
 
@@ -84,6 +84,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
