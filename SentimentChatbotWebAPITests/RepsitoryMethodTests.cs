@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
 using SentimentChatbotWebAPI.Data;
@@ -80,7 +81,33 @@ namespace SentimentChatbotWebAPITests
             Assert.Null(tokenString);
         }
 
+        [Fact]
+        public async void Write_Query_To_SQL_Successfuly_Executes()
+        {
+            //Arrange
+            var mockContext = new Mock<ISentimentQueryHistoryContext>();
+            var mockSet = new Mock<DbSet<QueryHistory>>();
+            //var mockITokenHandler = new Mock<ITokenHandler>();
+
+            mockContext.Setup(x => x.QueryHistories).Returns(mockSet.Object);
+
+            var repository = new ChatbotRepository(mockContext.Object, _configurationMock.Object, _jwtTokenHandlerMock.Object, _azureSecretClientWrapperMock.Object);
+
+            string queryText = "{'SentimentText' : 'Today is a good day'}";
+            string queryResult = "Positive";
+            string ipAddress = "192.168.1.0";
+
+            //Act
+            await repository.WriteQueryToSql(ipAddress, queryText, queryResult);
+
+            //Assert
+            mockSet.Verify(s => s.Add(It.IsAny<QueryHistory>()), Times.Once);
+            mockContext.Verify(c => c.SaveChanges(), Times.Once);
+        }
+
     }
+
+
 
 
 }
