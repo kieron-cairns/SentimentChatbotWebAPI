@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Models;
+using System.Text;
 
 namespace SentimentChatbotWebAPI.Controllers
 {
@@ -65,6 +66,42 @@ namespace SentimentChatbotWebAPI.Controllers
         public IActionResult VerifyBearer()
         {
             return Ok();
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> AnalyzeSentiment([FromBody] dynamic jsonData)
+        {
+            try
+            {
+                var url = "";
+
+                var jsonBody = jsonData.ToString();
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(url, content);
+
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                // TODO: Process the response if needed
+
+                var sentimentResult = new SentimentResult
+                {
+                    Result = responseContent
+                };
+
+                // Return the JsonResult immediately
+                var jsonResult = new JsonResult(sentimentResult);
+
+                return jsonResult;
+            }
+            catch (Exception ex)
+            {
+                // Handle exception appropriately 
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
         }
     }
 }
