@@ -14,6 +14,8 @@ using SentimentChatbotWebAPI.Models;
 using Microsoft.Extensions.Configuration;
 using SentimentChatbotWebAPI.Repository;
 using Microsoft.Extensions.DependencyInjection;
+using SentimentChatbotWebAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace SentimentChatbotWebAPITests
 {
@@ -23,13 +25,21 @@ namespace SentimentChatbotWebAPITests
         private readonly WebApplicationFactory<Program> _factory; // replace 'YourNamespace' with the actual namespace of your Program class
         private readonly Mock<IAzureSecretClientWrapper> _azureSecretClientWrapperMock;
         private readonly User _user;
+        private readonly SentimentQueryHistoryContext _context;
+        private readonly IChatbotRepository _chatbotRepository;
 
         public IntegrationTests(WebApplicationFactory<Program> factory) // replace 'YourNamespace' with the actual namespace of your Program class
         {
             _factory = factory;
             _azureSecretClientWrapperMock = new Mock<IAzureSecretClientWrapper>();
-            _configurationMock = new Mock<IConfiguration>();
             _user = new User { Username = "testUsername", Password = "TestPassword", Role = "testRole" };
+
+            //var contextOptions = new DbContextOptionsBuilder<SentimentQueryHistoryContext>()
+            //.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            //.Options;
+
+            //_context = new SentimentQueryHistoryContext(contextOptions);
+            //_chatbotRepository = new ChatbotRepository(_context, /* other dependencies here */);
         }
 
         [Fact]
@@ -58,5 +68,6 @@ namespace SentimentChatbotWebAPITests
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+
     }
 }

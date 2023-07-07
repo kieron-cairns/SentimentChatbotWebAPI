@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Moq;
+using SentimentChatbotWebAPI.Data;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Repository;
 
@@ -22,6 +24,12 @@ namespace SentimentChatbotWebAPI.Utilities
             builder.Services.AddSingleton(mockAzureKeyVaultService.Object);
 
             builder.Services.AddSingleton<IChatbotRepository, ChatbotRepository>();
+
+            // Use in-memory database for testing
+            var contextOptions = new DbContextOptionsBuilder<SentimentQueryHistoryContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
 
             // Then return the builder object
             return builder.Host;
