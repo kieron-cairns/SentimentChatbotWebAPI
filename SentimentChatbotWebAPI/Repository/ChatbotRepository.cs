@@ -67,5 +67,28 @@ namespace SentimentChatbotWebAPI.Repository
             }
         }
 
+        public async Task WriteQueryToSql(string ipAddress, string queryText, string queryResult)
+        {
+
+            QueryHistory newQuery = new QueryHistory()
+            {
+                Id = Guid.NewGuid(),
+                IpAddress = ipAddress,
+                Date = DateTime.Now,
+                QueryText = queryText,
+                QueryResult = queryResult
+            };
+            try
+            {
+                _context.QueryHistories.Add(newQuery);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+
     }
 }
