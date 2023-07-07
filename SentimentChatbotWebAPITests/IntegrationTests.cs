@@ -69,5 +69,36 @@ namespace SentimentChatbotWebAPITests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
+        [Fact]
+        public async Task Write_Query_To_SQL_Successfuly_Executes()
+        {
+            // Arrange
+            string queryText = "{'SentimentText' : 'Today is a good day'}";
+            string queryResult = "Positive";
+            string ipAddress = "192.168.1.0";
+
+            // Create a scope to retrieve scoped services
+            using var scope = _factory.Services.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+
+            var chatbotRepository = serviceProvider.GetRequiredService<IChatbotRepository>();
+            var context = serviceProvider.GetRequiredService<ISentimentQueryHistoryContext>();
+
+            // Act
+            await chatbotRepository.WriteQueryToSql(ipAddress, queryText, queryResult);
+
+            // Assert
+            var savedQueryHistory = await context.QueryHistories
+                .SingleOrDefaultAsync(q => q.QueryText == queryText && q.QueryResult == queryResult && q.IpAddress == ipAddress);
+
+            Assert.NotNull(savedQueryHistory);
+        }
+
+
+        public void Dispose()
+        {
+            _context.Database.EnsureDeleted();
+        }
+
     }
 }
