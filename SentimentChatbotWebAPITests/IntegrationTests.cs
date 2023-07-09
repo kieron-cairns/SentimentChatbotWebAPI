@@ -33,13 +33,6 @@ namespace SentimentChatbotWebAPITests
             _factory = factory;
             _azureSecretClientWrapperMock = new Mock<IAzureSecretClientWrapper>();
             _user = new User { Username = "testUsername", Password = "TestPassword", Role = "testRole" };
-
-            //var contextOptions = new DbContextOptionsBuilder<SentimentQueryHistoryContext>()
-            //.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            //.Options;
-
-            //_context = new SentimentQueryHistoryContext(contextOptions);
-            //_chatbotRepository = new ChatbotRepository(_context, /* other dependencies here */);
         }
 
         [Fact]
