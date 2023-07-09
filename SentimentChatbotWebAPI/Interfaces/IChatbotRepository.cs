@@ -6,5 +6,7 @@ namespace SentimentChatbotWebAPI.Interfaces
     {
         string GenerateJwtToken(User user);
         Task WriteQueryToSql(string ipAddress, string queryText, string queryResult);
+        List<QueryHistory> GetAllItemsByIp(string ipAddress);
+
     }
 }

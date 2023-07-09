@@ -43,7 +43,6 @@ namespace SentimentChatbotWebAPI.Repository
 
                 var tokenString = _jwtTokenHandler.WriteToken(token);
 
-
                 // Configure token validation parameters
                 var validationParameters = new TokenValidationParameters
                 {
@@ -89,6 +88,15 @@ namespace SentimentChatbotWebAPI.Repository
             }
         }
 
+        public List<QueryHistory> GetAllItemsByIp(string ipAddress)
+        {
+            var items = from query in _context.QueryHistories
+                        where query.IpAddress == ipAddress
+                        orderby query.Date ascending
+                        select query;
+
+            return items.ToList();
+        }
 
     }
 }
