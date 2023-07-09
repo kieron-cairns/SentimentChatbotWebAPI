@@ -74,7 +74,7 @@ namespace SentimentChatbotWebAPI.Controllers
         {
             try
             {
-                var url = "";
+                var url = "http://localhost:7055/api/AnalyzeSentiment";
 
                 var jsonBody = jsonData.ToString();
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");

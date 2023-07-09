@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using Moq.Protected;
 using SentimentChatbotWebAPI.Controllers;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Models;
 using SentimentChatbotWebAPITests.MockObjects;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace SentimentChatbotWebAPITests
 {
@@ -102,5 +104,64 @@ namespace SentimentChatbotWebAPITests
             var objectResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(200, objectResult.StatusCode);
         }
+
+        [Fact]
+        public async Task AnalyzeSentiment_ReturnsJsonResult_WhenCalledWithValidData()
+        {
+            // Arrange
+            var expectedUri = new Uri("http://localhost:7055/api/AnalyzeSentiment");
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post && req.RequestUri == expectedUri),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(JsonConvert.SerializeObject("Positive")),
+                });
+
+            var client = new HttpClient(mockHttpMessageHandler.Object);
+
+            var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+            httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+
+            var httpContextMock = new Mock<HttpContext>();
+
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            httpContextAccessorMock.SetupGet(a => a.HttpContext).Returns(httpContextMock.Object);
+
+            var chatbotRepositoryMock = new Mock<IChatbotRepository>();
+
+            var configurationMock = new Mock<IConfiguration>();
+
+            var secretClientWrapperMock = new Mock<IAzureSecretClientWrapper>();
+            secretClientWrapperMock.Setup(r => r.GetSecret("validusername")).Returns("validusername");
+            secretClientWrapperMock.Setup(r => r.GetSecret("validpassword")).Returns("validpassword");
+
+            var controller = new ChatbotController(
+                httpClientFactoryMock.Object,
+                httpContextAccessorMock.Object,
+                chatbotRepositoryMock.Object,
+                secretClientWrapperMock.Object,
+                configurationMock.Object
+            );
+
+            // Act
+            dynamic data = new { text = "{\"SentimentText\" : \"Today is a very good day\"}" };
+            var result = await controller.AnalyzeSentiment(data);
+
+            // Assert
+            var actionResult = Assert.IsType<JsonResult>(result);
+            var model = Assert.IsType<SentimentResult>(actionResult.Value);
+            //Assert.Equal("Expected Result", model.Result);
+            Assert.Equal(JsonConvert.SerializeObject("Positive"), model.Result);
+
+        }
+
+
+
     }
 }
