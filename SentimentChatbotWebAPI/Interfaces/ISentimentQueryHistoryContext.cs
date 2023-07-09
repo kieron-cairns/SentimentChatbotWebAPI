@@ -7,5 +7,7 @@ namespace SentimentChatbotWebAPI.Interfaces
     {
         DbSet<QueryHistory> QueryHistories { get; }
         int SaveChanges();
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
     }
 }

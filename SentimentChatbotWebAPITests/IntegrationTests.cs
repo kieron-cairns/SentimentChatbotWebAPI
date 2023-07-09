@@ -87,5 +87,41 @@ namespace SentimentChatbotWebAPITests
             Assert.NotNull(savedQueryHistory);
 
         }
+
+        [Fact]
+        public async Task GetAllItemsByIp_Returns_Expected_Items()
+        {
+            // Arrange
+            string queryText = "{'SentimentText' : 'Today is a good day'}";
+            string queryResult = "Positive";
+            string ipAddress = "192.168.1.0";
+
+            // Create a scope to retrieve scoped services
+            using var scope = _factory.Services.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+
+            var chatbotRepository = serviceProvider.GetRequiredService<IChatbotRepository>();
+            var context = serviceProvider.GetRequiredService<ISentimentQueryHistoryContext>();
+
+            // Clear database before the test
+            context.QueryHistories.RemoveRange(context.QueryHistories);
+            await context.SaveChangesAsync();
+
+            // Write a test record to the database
+            await chatbotRepository.WriteQueryToSql(ipAddress, queryText, queryResult);
+
+            // Act
+            var queryHistoryItems = chatbotRepository.GetAllItemsByIp(ipAddress);
+
+            // Assert
+            Assert.NotNull(queryHistoryItems);
+            Assert.Single(queryHistoryItems); // Expecting one item because we added one record
+
+            var queryHistoryItem = queryHistoryItems[0];
+            Assert.Equal(ipAddress, queryHistoryItem.IpAddress);
+            Assert.Equal(queryText, queryHistoryItem.QueryText);
+            Assert.Equal(queryResult, queryHistoryItem.QueryResult);
+        }
+
     }
 }
