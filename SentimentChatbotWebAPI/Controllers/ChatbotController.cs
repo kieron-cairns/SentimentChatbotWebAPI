@@ -68,7 +68,7 @@ namespace SentimentChatbotWebAPI.Controllers
             return Ok();
         }
 
-        [HttpPost]
+        [HttpPost("/AnalyseQuery")]
         [Authorize]
         public async Task<IActionResult> AnalyzeSentiment([FromBody] dynamic jsonData)
         {
