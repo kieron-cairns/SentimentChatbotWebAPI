@@ -9,6 +9,7 @@ using SentimentChatbotWebAPI.Models;
 using SentimentChatbotWebAPITests.MockObjects;
 using System.Net;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace SentimentChatbotWebAPITests
 {
@@ -161,7 +162,71 @@ namespace SentimentChatbotWebAPITests
 
         }
 
+        [Fact]
+        public async Task PostToSql_Returns_SuccesfullJsonResult()
+        {
+            //Arrange
+            var jsonDataString = new InputJsonBoody
+            {
+                SentimentText = "The weather is fantastic today!"
+            };
 
+            //Serialize the json input
+            string jsonData = System.Text.Json.JsonSerializer.Serialize(jsonDataString);
+
+            var ipAddress = "127.0.0.1";
+            var httpClientMock = new Mock<IHttpClientFactory>();
+            var httpClient = new HttpClient(new MockHttpMessageHandler((request, cancellationToken) =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{\"result\": \"Positive\"}", Encoding.UTF8, "application/json")
+                };
+                return Task.FromResult(response);
+            }));
+
+            var configurationMock = new Mock<IConfiguration>();
+
+
+            httpClientMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+            var sentimentRepositoryMock = new Mock<IChatbotRepository>();
+            sentimentRepositoryMock.Setup(_ => _.WriteQueryToSql(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
+
+            var httpContextMock = new Mock<HttpContext>();
+
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            httpContextAccessorMock.SetupGet(a => a.HttpContext).Returns(httpContextMock.Object);
+            httpContextAccessorMock.SetupGet(c => c.HttpContext.Connection.RemoteIpAddress).Returns(IPAddress.Parse(ipAddress));
+
+            var controller = new ChatbotController(httpClientMock.Object, httpContextAccessorMock.Object, sentimentRepositoryMock.Object, _azureSecretClientWrapper.Object, configurationMock.Object);
+
+            // Create a mock ConnectionInfo with a mock RemoteIpAddress
+            var connectionInfoMock = new Mock<ConnectionInfo>();
+            connectionInfoMock.SetupGet(c => c.RemoteIpAddress).Returns(IPAddress.Parse(ipAddress));
+
+            // Create a mock HttpContext and set the Connection property
+
+            httpContextMock.SetupGet(c => c.Connection).Returns(connectionInfoMock.Object);
+
+            // Assign the mock HttpContext to the controller's ControllerContext
+            controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = httpContextMock.Object
+            };
+
+            //Act
+            var result = await controller.PostQueryToSql(jsonData);
+
+            //Assert
+            Assert.IsType<JsonResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var sentimentResult = Assert.IsType<SentimentResult>(jsonResult.Value);
+            Assert.Equal("{\"result\": \"Positive\"}", sentimentResult.Result);
+            Assert.Equal(200, jsonResult.StatusCode);
+
+            sentimentRepositoryMock.Verify(_ => _.WriteQueryToSql(ipAddress, It.IsAny<string>(), sentimentResult.Result), Times.Once);
+        }
 
     }
 }

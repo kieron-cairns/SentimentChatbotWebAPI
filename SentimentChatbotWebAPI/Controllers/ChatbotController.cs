@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Models;
+using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace SentimentChatbotWebAPI.Controllers
 {
@@ -101,6 +103,45 @@ namespace SentimentChatbotWebAPI.Controllers
             {
                 // Handle exception appropriately 
                 return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+        [HttpPost("/PostToSql")]
+        [Authorize]
+        public async Task<IActionResult> PostQueryToSql([FromBody] dynamic jsonData)
+        {
+            var ipAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+
+            try
+            {
+                var url = "http://localhost:7055/api/AnalyzeSentiment";
+                var jsonBody = jsonData.ToString();
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                JsonDocument jsonQueryText = JsonDocument.Parse(jsonBody);
+                JsonElement rootElement = jsonQueryText.RootElement;
+                string queryText = rootElement.GetProperty("SentimentText").GetString();
+
+                var response = await _httpClient.PostAsync(url, content);
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                var sentimentResult = new SentimentResult
+                {
+                    Result = responseContent
+                };
+
+                var jsonResult = new JsonResult(sentimentResult);
+                jsonResult.StatusCode = (int)HttpStatusCode.OK;
+
+                _repository.WriteQueryToSql(ipAddress, queryText, sentimentResult.Result);
+
+                return jsonResult;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
             }
         }
     }
