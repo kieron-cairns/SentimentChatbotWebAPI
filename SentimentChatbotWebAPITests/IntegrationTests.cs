@@ -89,16 +89,10 @@ namespace SentimentChatbotWebAPITests
 
             // Assert
             var savedQueryHistory = await context.QueryHistories
-                .SingleOrDefaultAsync(q => q.QueryText == queryText && q.QueryResult == queryResult && q.IpAddress == ipAddress);
+                .FirstOrDefaultAsync(q => q.QueryText == queryText && q.QueryResult == queryResult && q.IpAddress == ipAddress);
 
             Assert.NotNull(savedQueryHistory);
+
         }
-
-
-        public void Dispose()
-        {
-            _context.Database.EnsureDeleted();
-        }
-
     }
 }
