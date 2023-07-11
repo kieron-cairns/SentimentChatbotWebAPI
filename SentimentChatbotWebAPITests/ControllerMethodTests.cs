@@ -283,5 +283,38 @@ namespace SentimentChatbotWebAPITests
             var items = Assert.IsType<List<QueryHistory>>(okResult.Value);
             Assert.Equal(expectedItems.Count, items.Count);
         }
+
+        [Fact]
+        public async Task DeleteAllItemsByIp_Returns_OkResult()
+        {
+            // Arrange
+            var ipAddress = "127.0.0.1";
+            var httpClientMock = new Mock<IHttpClientFactory>();
+            var httpClient = new HttpClient(new MockHttpMessageHandler((request, cancellationToken) =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+                return Task.FromResult(response);
+            }));
+
+            var httpContextMock = new Mock<HttpContext>();
+
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            httpContextAccessorMock.SetupGet(a => a.HttpContext).Returns(httpContextMock.Object);
+            httpContextAccessorMock.SetupGet(c => c.HttpContext.Connection.RemoteIpAddress).Returns(IPAddress.Parse(ipAddress));
+
+            var sentimentRepositoryMock = new Mock<IChatbotRepository>();
+            sentimentRepositoryMock.Setup(_ => _.WriteQueryToSql(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
+            var configurationMock = new Mock<IConfiguration>();
+
+            var controller = new ChatbotController(httpClientMock.Object, httpContextAccessorMock.Object, sentimentRepositoryMock.Object, _azureSecretClientWrapper.Object, configurationMock.Object);
+
+            // Act
+            var result = await controller.DeleteAllItemsByIpAddress();
+
+            // Assert
+            var statusCodeResult = Assert.IsType<OkResult>(result);
+            Assert.Equal(200, statusCodeResult.StatusCode);
+        }
     }
 }
