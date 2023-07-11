@@ -147,9 +147,37 @@ namespace SentimentChatbotWebAPITests
             // Perform additional assertions on the retrieved items as needed
         }
 
+        [Fact]
+        public void DeleteAllByIpAddress_Deletes_Items_For_Given_Ip_Address()
+        {
+            // Arrange
+            var ipAddress = "127.0.0.1";
+            var itemsToDelete = new List<QueryHistory>()
+            {
+                new QueryHistory { Id = Guid.NewGuid(), IpAddress = "127.0.0.1", Date = DateTime.Now, QueryText = "The weather is good today", QueryResult = "Positive" },
+                new QueryHistory { Id = Guid.NewGuid(), IpAddress = "127.0.0.1", Date = DateTime.Now, QueryText = "The weather is bad today", QueryResult = "Negative" },
+            };
+
+            var mockContext = new Mock<ISentimentQueryHistoryContext>();
+            var mockQueryHistories = new Mock<DbSet<QueryHistory>>();
+
+            mockQueryHistories.As<IQueryable<QueryHistory>>().Setup(m => m.Provider).Returns(itemsToDelete.AsQueryable().Provider);
+            mockQueryHistories.As<IQueryable<QueryHistory>>().Setup(m => m.Expression).Returns(itemsToDelete.AsQueryable().Expression);
+            mockQueryHistories.As<IQueryable<QueryHistory>>().Setup(m => m.ElementType).Returns(itemsToDelete.AsQueryable().ElementType);
+            mockQueryHistories.As<IQueryable<QueryHistory>>().Setup(m => m.GetEnumerator()).Returns(() => itemsToDelete.AsQueryable().GetEnumerator());
+
+            mockContext.Setup(c => c.QueryHistories).Returns(mockQueryHistories.Object);
+
+
+            var repository = new ChatbotRepository(mockContext.Object, _configurationMock.Object, _jwtTokenHandlerMock.Object, _azureSecretClientWrapperMock.Object);
+
+            //Act
+            repository.DeleteAllByIpAddress(ipAddress);
+
+            // Assert
+            mockQueryHistories.Verify(q => q.RemoveRange(It.Is<IEnumerable<QueryHistory>>(items => items.All(i => i.IpAddress == ipAddress))), Times.Once);
+            mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
     }
-
-
-
-
 }
