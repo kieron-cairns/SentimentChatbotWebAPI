@@ -75,18 +75,22 @@ namespace SentimentChatbotWebAPITests
             var serviceProvider = scope.ServiceProvider;
 
             var chatbotRepository = serviceProvider.GetRequiredService<IChatbotRepository>();
-            var context = serviceProvider.GetRequiredService<ISentimentQueryHistoryContext>();
 
             // Act
             await chatbotRepository.WriteQueryToSql(ipAddress, queryText, queryResult);
 
             // Assert
-            var savedQueryHistory = await context.QueryHistories
+            // Create another scope for DbContext used for verification
+            using var scopeForVerification = _factory.Services.CreateScope();
+            var verificationServiceProvider = scopeForVerification.ServiceProvider;
+            var verificationContext = verificationServiceProvider.GetRequiredService<ISentimentQueryHistoryContext>();
+
+            var savedQueryHistory = await verificationContext.QueryHistories
                 .FirstOrDefaultAsync(q => q.QueryText == queryText && q.QueryResult == queryResult && q.IpAddress == ipAddress);
 
             Assert.NotNull(savedQueryHistory);
-
         }
+
 
         [Fact]
         public async Task GetAllItemsByIp_Returns_Expected_Items()

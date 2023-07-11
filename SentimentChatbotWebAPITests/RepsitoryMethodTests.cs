@@ -99,6 +99,7 @@ namespace SentimentChatbotWebAPITests
             //var mockITokenHandler = new Mock<ITokenHandler>();
 
             mockContext.Setup(x => x.QueryHistories).Returns(mockSet.Object);
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             var repository = new ChatbotRepository(mockContext.Object, _configurationMock.Object, _jwtTokenHandlerMock.Object, _azureSecretClientWrapperMock.Object);
 
@@ -111,7 +112,7 @@ namespace SentimentChatbotWebAPITests
 
             //Assert
             mockSet.Verify(s => s.Add(It.IsAny<QueryHistory>()), Times.Once);
-            mockContext.Verify(c => c.SaveChanges(), Times.Once);
+            mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
