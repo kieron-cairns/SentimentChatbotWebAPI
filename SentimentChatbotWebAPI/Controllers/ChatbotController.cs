@@ -154,5 +154,25 @@ namespace SentimentChatbotWebAPI.Controllers
             List<QueryHistory> items = _repository.GetAllItemsByIp(ipAddress);
             return Ok(items);
         }
+
+        [HttpDelete("/DeleteAllByIp")]
+        [Authorize]
+        public async Task<IActionResult> DeleteAllItemsByIpAddress()
+        {
+            var ipAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+
+            try
+            {
+                _repository.DeleteAllByIpAddress(ipAddress);
+                //_httpContextAccessor.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+                return Ok();
+
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, ex);
+            }
+        }
     }
 }
