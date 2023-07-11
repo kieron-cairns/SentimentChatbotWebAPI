@@ -144,5 +144,15 @@ namespace SentimentChatbotWebAPI.Controllers
                 return StatusCode(500, ex);
             }
         }
+
+        [HttpGet("/GetQueriesByIp")]
+        [Authorize]
+        public IActionResult GetAllItemsByIp()
+        {
+            var ipAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+
+            List<QueryHistory> items = _repository.GetAllItemsByIp(ipAddress);
+            return Ok(items);
+        }
     }
 }
