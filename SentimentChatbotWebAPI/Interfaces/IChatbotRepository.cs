@@ -9,6 +9,5 @@ namespace SentimentChatbotWebAPI.Interfaces
         List<QueryHistory> GetAllItemsByIp(string ipAddress);
 
         void DeleteAllByIpAddress(string ipAddress);
-
     }
 }
