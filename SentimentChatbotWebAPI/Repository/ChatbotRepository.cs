@@ -98,5 +98,24 @@ namespace SentimentChatbotWebAPI.Repository
             return items.ToList();
         }
 
+        public async void DeleteAllByIpAddress(string ipAddress)
+        {
+            var itemsToDelete = from query in _context.QueryHistories
+                                where query.IpAddress == ipAddress
+                                select query;
+
+            itemsToDelete.ToList();
+            try
+            {
+                _context.QueryHistories.RemoveRange(itemsToDelete);
+               await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+
     }
 }
