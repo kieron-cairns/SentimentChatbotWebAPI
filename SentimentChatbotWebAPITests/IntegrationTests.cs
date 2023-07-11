@@ -91,7 +91,6 @@ namespace SentimentChatbotWebAPITests
             Assert.NotNull(savedQueryHistory);
         }
 
-
         [Fact]
         public async Task GetAllItemsByIp_Returns_Expected_Items()
         {
@@ -127,5 +126,44 @@ namespace SentimentChatbotWebAPITests
             Assert.Equal(queryResult, queryHistoryItem.QueryResult);
         }
 
+        [Fact]
+        public async Task DeleteAllByIpAddress_Deletes_Correct_Items()
+        {
+            // Arrange
+            string deleteIpAddress = "192.168.1.1";
+            string keepIpAddress = "192.168.1.0";
+
+            string queryText = "{'SentimentText' : 'Today is a good day'}";
+            string queryResult = "Positive";
+
+            using var scope = _factory.Services.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+
+            var chatbotRepository = serviceProvider.GetRequiredService<IChatbotRepository>();
+            var context = serviceProvider.GetRequiredService<ISentimentQueryHistoryContext>();
+
+            // Clear database before the test
+            context.QueryHistories.RemoveRange(context.QueryHistories);
+
+            await context.SaveChangesAsync();
+
+            // Add items to be deleted
+            await chatbotRepository.WriteQueryToSql(deleteIpAddress, queryText, queryResult);
+            await chatbotRepository.WriteQueryToSql(deleteIpAddress, queryText, queryResult);
+
+            // Add item to be kept
+            await chatbotRepository.WriteQueryToSql(keepIpAddress, queryText, queryResult);
+            await context.SaveChangesAsync(); // Make sure delete operation completes before initiating read operation
+
+            // Act
+            await chatbotRepository.DeleteAllByIpAddress(deleteIpAddress);
+            await context.SaveChangesAsync(); // Make sure delete operation completes before initiating read operation
+
+            // Assert
+            var remainingItems = chatbotRepository.GetAllItemsByIp(keepIpAddress);
+
+            Assert.Single(remainingItems);
+            Assert.All(remainingItems, item => Assert.Equal(keepIpAddress, item.IpAddress));
+        }
     }
 }

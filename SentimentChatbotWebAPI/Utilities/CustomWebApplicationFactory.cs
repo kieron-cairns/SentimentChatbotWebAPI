@@ -30,7 +30,6 @@ namespace SentimentChatbotWebAPI.Utilities
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
-
             // Then return the builder object
             return builder.Host;
         }

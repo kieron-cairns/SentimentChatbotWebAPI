@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SentimentChatbotWebAPI.Interfaces;
 using SentimentChatbotWebAPI.Models;
@@ -90,7 +91,10 @@ namespace SentimentChatbotWebAPI.Repository
 
         public List<QueryHistory> GetAllItemsByIp(string ipAddress)
         {
-            var items = from query in _context.QueryHistories
+
+            
+
+            var items = from query in _context.QueryHistories.AsNoTracking()
                         where query.IpAddress == ipAddress
                         orderby query.Date ascending
                         select query;
@@ -98,7 +102,7 @@ namespace SentimentChatbotWebAPI.Repository
             return items.ToList();
         }
 
-        public async void DeleteAllByIpAddress(string ipAddress)
+        public async Task DeleteAllByIpAddress(string ipAddress)
         {
             var itemsToDelete = from query in _context.QueryHistories
                                 where query.IpAddress == ipAddress
