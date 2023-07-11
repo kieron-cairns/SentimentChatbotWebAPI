@@ -160,7 +160,6 @@ namespace SentimentChatbotWebAPITests
             var model = Assert.IsType<SentimentResult>(actionResult.Value);
             //Assert.Equal("Expected Result", model.Result);
             Assert.Equal(JsonConvert.SerializeObject("Positive"), model.Result);
-
         }
 
         [Fact]
@@ -284,6 +283,5 @@ namespace SentimentChatbotWebAPITests
             var items = Assert.IsType<List<QueryHistory>>(okResult.Value);
             Assert.Equal(expectedItems.Count, items.Count);
         }
-
     }
 }
