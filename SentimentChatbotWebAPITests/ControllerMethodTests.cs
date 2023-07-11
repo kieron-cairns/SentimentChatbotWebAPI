@@ -10,6 +10,7 @@ using SentimentChatbotWebAPITests.MockObjects;
 using System.Net;
 using Newtonsoft.Json;
 using System.Text;
+using System.Net.Http;
 
 namespace SentimentChatbotWebAPITests
 {
@@ -187,7 +188,6 @@ namespace SentimentChatbotWebAPITests
 
             var configurationMock = new Mock<IConfiguration>();
 
-
             httpClientMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
             var sentimentRepositoryMock = new Mock<IChatbotRepository>();
@@ -226,6 +226,63 @@ namespace SentimentChatbotWebAPITests
             Assert.Equal(200, jsonResult.StatusCode);
 
             sentimentRepositoryMock.Verify(_ => _.WriteQueryToSql(ipAddress, It.IsAny<string>(), sentimentResult.Result), Times.Once);
+        }
+
+        [Fact]
+        public void GetAllItemsByIp_Returns_OkResult_With_Items()
+        {
+            // Arrange
+            Guid id1 = Guid.NewGuid();
+            Guid id2 = Guid.NewGuid();
+
+            string ipAddress = "127.0.0.1";
+
+            DateTime date1 = DateTime.UtcNow;
+            DateTime date2 = DateTime.UtcNow;
+
+            string queryText1 = "The weather is great today!";
+            string queryText2 = "The weather is awful today!";
+
+            string result1 = "Positive";
+            string result2 = "Negative";
+
+            var expectedItems = new List<QueryHistory>()
+        {
+            new QueryHistory { Id = id1, IpAddress = ipAddress, Date = date1, QueryText = queryText1, QueryResult = result1 },
+            new QueryHistory { Id = id2, IpAddress = ipAddress, Date = date2, QueryText = queryText2, QueryResult = result2 },
+        };
+
+            var httpClientMock = new Mock<IHttpClientFactory>();
+            var httpClient = new HttpClient(new MockHttpMessageHandler((request, cancellationToken) =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+                return Task.FromResult(response);
+            }));
+
+            var httpContextMock = new Mock<HttpContext>();
+
+            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+            httpContextAccessorMock.SetupGet(a => a.HttpContext).Returns(httpContextMock.Object);
+            httpContextAccessorMock.SetupGet(c => c.HttpContext.Connection.RemoteIpAddress).Returns(IPAddress.Parse(ipAddress));
+
+
+            var repositoryMock = new Mock<IChatbotRepository>();
+            repositoryMock.Setup(_ => _.GetAllItemsByIp(ipAddress)).Returns(expectedItems);
+
+            var configurationMock = new Mock<IConfiguration>();
+
+
+            var controller = new ChatbotController(httpClientMock.Object, httpContextAccessorMock.Object, repositoryMock.Object, _azureSecretClientWrapper.Object, configurationMock.Object);
+
+            // Act
+            var result = controller.GetAllItemsByIp();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var items = Assert.IsType<List<QueryHistory>>(okResult.Value);
+            Assert.Equal(expectedItems.Count, items.Count);
         }
 
     }
