@@ -80,7 +80,7 @@ namespace SentimentChatbotWebAPI.Repository
             try
             {
                 _context.QueryHistories.Add(newQuery);
-                _context.SaveChangesAsync();
+               await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
