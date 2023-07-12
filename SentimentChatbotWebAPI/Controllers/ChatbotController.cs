@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SentimentChatbotWebAPI.Interfaces;
@@ -76,7 +77,7 @@ namespace SentimentChatbotWebAPI.Controllers
         {
             try
             {
-                var url = "http://localhost:7055/api/AnalyzeSentiment";
+                var url = _configuration["Urls:SentimentAnalyser"];
 
                 var jsonBody = jsonData.ToString();
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
@@ -106,7 +107,7 @@ namespace SentimentChatbotWebAPI.Controllers
             }
         }
 
-        [HttpPost("/PostToSql")]
+        [HttpPost("/PostQueryToSql")]
         [Authorize]
         public async Task<IActionResult> PostQueryToSql([FromBody] dynamic jsonData)
         {
@@ -114,7 +115,7 @@ namespace SentimentChatbotWebAPI.Controllers
 
             try
             {
-                var url = "http://localhost:7055/api/AnalyzeSentiment";
+                var url = _configuration["URLs:SentimentAnalyser"];
                 var jsonBody = jsonData.ToString();
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
@@ -164,7 +165,6 @@ namespace SentimentChatbotWebAPI.Controllers
             try
             {
                 _repository.DeleteAllByIpAddress(ipAddress);
-                //_httpContextAccessor.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
                 return Ok();
 
             }

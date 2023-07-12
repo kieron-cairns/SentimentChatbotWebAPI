@@ -74,6 +74,18 @@ public class Program
 
         builder.Services.AddSingleton<IAzureSecretClientWrapper, AzureSecretClientWrapper>();
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("MyPolicy", builder =>
+            {
+                builder.WithOrigins("http://localhost:3000")
+                       .AllowAnyMethod()
+                       .AllowAnyHeader()
+                       .AllowCredentials();
+            });
+        });
+
+
         var jwtSecretToken = client.GetSecret(builder.Configuration.GetSection("JWTConfig:TokenName").Value).Value.Value;
 
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
@@ -87,6 +99,20 @@ public class Program
                 ValidAudience = builder.Configuration["Jwt:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretToken))
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    Console.WriteLine("OnAuthenticationFailed: " + context.Exception.Message);
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    Console.WriteLine("OnTokenValidated: " + context.SecurityToken);
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         var app = builder.Build();
@@ -97,14 +123,14 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-
+        app.UseRouting();
         app.UseAuthentication();
+        app.UseCors("MyPolicy");
+        app.UseAuthorization();
         app.UseHttpsRedirection();
 
-        app.UseAuthorization();
 
         app.MapControllers();
-
         return app;
     }
 }

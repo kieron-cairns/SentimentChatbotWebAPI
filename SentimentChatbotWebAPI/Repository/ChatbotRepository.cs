@@ -119,7 +119,5 @@ namespace SentimentChatbotWebAPI.Repository
                 Console.WriteLine(ex);
             }
         }
-
-
     }
 }
